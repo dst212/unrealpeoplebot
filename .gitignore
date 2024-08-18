@@ -1,0 +1,8 @@
+**/__pycache__
+*.session
+*.session-journal
+logo/
+keys.py
+config.py
+env
+Session.vim
