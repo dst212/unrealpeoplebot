@@ -13,6 +13,12 @@ import uvloop
 
 from pyrogram import Client, idle, filters
 from pyrogram.enums import ParseMode
+from pyrogram.types import (
+    InlineQueryResultCachedPhoto,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from pyrogram.errors import QueryIdInvalid
 
 LINK = "https://thispersondoesnotexist.com"
 
@@ -30,6 +36,7 @@ async def get_photo():
 
 async def main():
     channel = None
+    username = None
     me = None
     docs = {}
     lock = asyncio.Lock()
@@ -65,27 +72,48 @@ async def main():
             f"This bot works thanks to {LINK}.\n\n"
             f"To get started, send /go!\n\n"
             f"If you don't want the result to be shared to the channel, send /silent instead.",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("Use it inline!", switch_inline_query=""),
+            ]]),
         )
 
     @bot.on_message(filters.command(["go", "silent"]))
     async def _(bot, m):
         r = await m.reply("Loading...")
         file = await get_photo()
-        photo = await m.reply_photo(file, caption=f"@{me.username}")
+        photo = await m.reply_photo(file, caption=f"@{username}")
         try:
             await r.delete()
         except Exception:
             pass
-        document = await m.reply_document(file, caption=f"@{me.username}")
+        document = await m.reply_document(file, caption=f"@{username}")
         if channel:
             if m.command[0].startswith("go"):
-                await photo.copy(channel.id)
                 async with lock:
                     docs[photo.photo.file_unique_id] = document
+                await photo.copy(channel.id)
             else:
                 # I still enjoy seeing the bugged pictures, I can't miss any
                 p = await photo.copy(**log_chat)
                 await document.copy(**dict(log_chat, reply_to_message_id=p.id))
+
+    @bot.on_inline_query()
+    async def _(bot, q):
+        file = await get_photo()
+        photo = await bot.send_photo(**log_chat, photo=file)
+        try:
+            await q.answer([InlineQueryResultCachedPhoto(
+                photo.photo.file_id,
+                title="Generate person!",
+                caption=f"@{username}",
+            )], cache_time=1)
+        except QueryIdInvalid:
+            pass
+        document = await bot.send_document(**dict(log_chat, reply_to_message_id=photo.id, document=file))
+        if "silent" not in q.query and channel:
+            async with lock:
+                docs[photo.photo.file_unique_id] = document
+            await photo.copy(channel.id)
 
     async with bot:
         if CHANNEL:
@@ -101,6 +129,7 @@ async def main():
                             del docs[unique_id]
                         else:
                             log.warning(f"Unrecognized file: {unique_id}")
+        username = channel.username if channel and channel.username else me.username
         me = await bot.get_users("me")
         log.info(f"Started as @{me.username}.")
         await sudo.log("Started.")
