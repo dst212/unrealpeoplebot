@@ -33,6 +33,12 @@ async def main():
     me = None
     docs = {}
     lock = asyncio.Lock()
+    log_chat = dict(
+        chat_id=LOG_CHAT[0],
+        reply_to_message_id=LOG_CHAT[1],
+    ) if isinstance(LOG_CHAT, list) else dict(
+        chat_id=LOG_CHAT,
+    )
 
     bot = Client(BOTNAME, api_id=API_ID, api_hash=API_HASH, bot_token=TOKEN)
     bot.set_parse_mode(ParseMode.HTML)
@@ -78,8 +84,8 @@ async def main():
                     docs[photo.photo.file_unique_id] = document
             else:
                 # I still enjoy seeing the bugged pictures, I can't miss any
-                p = await photo.copy(LOG_CHAT)
-                await document.copy(LOG_CHAT, reply_to_message_id=p.id)
+                p = await photo.copy(**log_chat)
+                await document.copy(**dict(log_chat, reply_to_message_id=p.id))
 
     async with bot:
         if CHANNEL:
