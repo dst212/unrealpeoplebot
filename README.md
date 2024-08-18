@@ -13,6 +13,8 @@ Requires Python 3.12+.
 On Linux and UNIX-based systems:
 
 ```shell
+git clone --recurse-submodules https://github.com/dst212/unrealpeoplebot.git
+cd unrealpeoplebot
 python3 -m venv env
 source env/bin/activate
 python3 -m pip install -r requirements.txt
@@ -20,17 +22,17 @@ python3 -m pip install -r requirements.txt
 
 ## Configuration
 
-`config.py`:
+`config.py`
 
 ```python
-BOTNAME = "unrealpersonbot"  # Name of the bot for logging purposes
+BOTNAME = "unrealpeoplebot"  # Name of the bot for logging purposes
 CHANNEL = "@thesepeopledonotexist"  # Channel where generated pictures will be shared
 ADMINS = [448025569]  # Whoever will be able to reply to /feedback and manage the bot
 LOG_CHAT = ADMINS[0]  # Log bot actions (start, stop)
 SUPPORT_CHAT = ADMINS[0]  # Chat for /feedback
 ```
 
-`keys.py:`
+`keys.py`
 
 ```python
 TOKEN = "Bot's token here"
